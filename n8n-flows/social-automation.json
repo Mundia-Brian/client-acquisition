@@ -1,0 +1,118 @@
+{
+  "name": "Social Media Automation",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 4
+            }
+          ]
+        }
+      },
+      "id": "content-trigger",
+      "name": "Content Trigger",
+      "type": "n8n-nodes-base.cron",
+      "typeVersion": 1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT * FROM prospects WHERE status = 'new' ORDER BY score DESC LIMIT 5"
+      },
+      "id": "get-top-prospects",
+      "name": "Get Top Prospects",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 1,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "url": "http://mixpost:80/api/posts",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer {{ $env.MIXPOST_API_TOKEN }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "content",
+              "value": "Excited to connect with professionals at {{ $json.company }}! 🚀 #networking #business"
+            },
+            {
+              "name": "platforms",
+              "value": ["linkedin", "twitter"]
+            },
+            {
+              "name": "schedule_at",
+              "value": "{{ $now.plus({hours: 1}).toISO() }}"
+            }
+          ]
+        }
+      },
+      "id": "create-social-post",
+      "name": "Create Social Post",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE prospects SET status = 'social_engaged' WHERE id = $1",
+        "additionalFields": {
+          "mode": "independently"
+        }
+      },
+      "id": "update-status",
+      "name": "Update Prospect Status",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 1,
+      "position": [900, 300]
+    }
+  ],
+  "connections": {
+    "Content Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get Top Prospects",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Top Prospects": {
+      "main": [
+        [
+          {
+            "node": "Create Social Post",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Social Post": {
+      "main": [
+        [
+          {
+            "node": "Update Prospect Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}

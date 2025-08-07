@@ -1,0 +1,161 @@
+{
+  "name": "Lead Nurture Sequence",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 24
+            }
+          ]
+        }
+      },
+      "id": "daily-trigger",
+      "name": "Daily Trigger",
+      "type": "n8n-nodes-base.cron",
+      "typeVersion": 1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT * FROM prospects WHERE status = 'engaged' AND last_contacted < NOW() - INTERVAL '3 days'"
+      },
+      "id": "get-prospects",
+      "name": "Get Prospects to Nurture",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 1,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "number": [
+            {
+              "value1": "={{ $json.score }}",
+              "operation": "larger",
+              "value2": 70
+            }
+          ]
+        }
+      },
+      "id": "high-value-filter",
+      "name": "High Value Filter",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "url": "https://api.calendly.com/scheduled_events",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer {{ $env.CALENDLY_ACCESS_TOKEN }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "invitee_email",
+              "value": "={{ $json.email }}"
+            },
+            {
+              "name": "event_type",
+              "value": "discovery_call"
+            }
+          ]
+        }
+      },
+      "id": "send-calendar-invite",
+      "name": "Send Calendar Invite",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [900, 200]
+    },
+    {
+      "parameters": {
+        "url": "https://api.lemlist.com/api/campaigns/nurture/leads",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-API-Key",
+              "value": "{{ $env.LEMLIST_API_KEY }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "email",
+              "value": "={{ $json.email }}"
+            },
+            {
+              "name": "firstName",
+              "value": "={{ $json.first_name }}"
+            },
+            {
+              "name": "companyName",
+              "value": "={{ $json.company }}"
+            }
+          ]
+        }
+      },
+      "id": "add-to-nurture",
+      "name": "Add to Nurture Campaign",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [900, 400]
+    }
+  ],
+  "connections": {
+    "Daily Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get Prospects to Nurture",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Prospects to Nurture": {
+      "main": [
+        [
+          {
+            "node": "High Value Filter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "High Value Filter": {
+      "main": [
+        [
+          {
+            "node": "Send Calendar Invite",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Add to Nurture Campaign",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}

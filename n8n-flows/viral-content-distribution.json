@@ -1,0 +1,162 @@
+{
+  "name": "Viral Content Distribution",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 6
+            }
+          ]
+        }
+      },
+      "id": "content-trigger",
+      "name": "Content Creation Trigger",
+      "type": "n8n-nodes-base.cron",
+      "typeVersion": 1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT * FROM video_content WHERE status = 'created' AND youtube_url IS NULL LIMIT 5"
+      },
+      "id": "get-videos",
+      "name": "Get New Videos",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 1,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "url": "https://www.googleapis.com/upload/youtube/v3/videos",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer {{ $env.YOUTUBE_ACCESS_TOKEN }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "part",
+              "value": "snippet,status"
+            },
+            {
+              "name": "snippet",
+              "value": {
+                "title": "{{ $json.title }}",
+                "description": "Personalized business video",
+                "tags": ["business", "personalized", "sales"]
+              }
+            }
+          ]
+        }
+      },
+      "id": "upload-youtube",
+      "name": "Upload to YouTube",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "url": "http://mixpost:80/api/posts",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer {{ $env.MIXPOST_API_TOKEN }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "content",
+              "value": "🎥 New personalized video: {{ $json.youtube_url }} #PersonalizedMarketing #BusinessGrowth"
+            },
+            {
+              "name": "platforms",
+              "value": ["linkedin", "twitter", "facebook", "instagram"]
+            },
+            {
+              "name": "schedule_at",
+              "value": "{{ $now.plus({minutes: 30}).toISO() }}"
+            }
+          ]
+        }
+      },
+      "id": "distribute-social",
+      "name": "Distribute on Social",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [900, 300]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE video_content SET youtube_url = $1, status = 'published' WHERE id = $2"
+      },
+      "id": "update-video",
+      "name": "Update Video Status",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 1,
+      "position": [1120, 300]
+    }
+  ],
+  "connections": {
+    "Content Creation Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get New Videos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get New Videos": {
+      "main": [
+        [
+          {
+            "node": "Upload to YouTube",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload to YouTube": {
+      "main": [
+        [
+          {
+            "node": "Distribute on Social",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Distribute on Social": {
+      "main": [
+        [
+          {
+            "node": "Update Video Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}

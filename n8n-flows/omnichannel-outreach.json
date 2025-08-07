@@ -1,0 +1,177 @@
+{
+  "name": "Omnichannel Outreach",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 2
+            }
+          ]
+        }
+      },
+      "id": "outreach-trigger",
+      "name": "Outreach Trigger",
+      "type": "n8n-nodes-base.cron",
+      "typeVersion": 1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT * FROM prospects WHERE score > 60 AND last_contacted < NOW() - INTERVAL '24 hours' ORDER BY score DESC LIMIT 10"
+      },
+      "id": "get-prospects",
+      "name": "Get High-Score Prospects",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 1,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "number": [
+            {
+              "value1": "={{ $json.score }}",
+              "operation": "larger",
+              "value2": 90
+            }
+          ]
+        }
+      },
+      "id": "score-router",
+      "name": "Score Router",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "url": "http://comm-hub:5000/call",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "to",
+              "value": "={{ $json.phone }}"
+            },
+            {
+              "name": "script",
+              "value": "Hi {{ $json.first_name }}, this is about an opportunity for {{ $json.company }}. Can we schedule a quick call?"
+            },
+            {
+              "name": "prospect_id",
+              "value": "={{ $json.id }}"
+            }
+          ]
+        }
+      },
+      "id": "make-call",
+      "name": "Make Call (90+ Score)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [900, 200]
+    },
+    {
+      "parameters": {
+        "url": "http://comm-hub:5000/sms",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "to",
+              "value": "={{ $json.phone }}"
+            },
+            {
+              "name": "message",
+              "value": "Hi {{ $json.first_name }}! Saw your work at {{ $json.company }}. Have a solution that could help. Quick chat? Reply STOP to opt out."
+            },
+            {
+              "name": "prospect_id",
+              "value": "={{ $json.id }}"
+            }
+          ]
+        }
+      },
+      "id": "send-sms",
+      "name": "Send SMS (60-89 Score)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [900, 400]
+    },
+    {
+      "parameters": {
+        "url": "http://video-creator:8000/create",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "prospect_id",
+              "value": "={{ $json.id }}"
+            }
+          ]
+        }
+      },
+      "id": "create-video",
+      "name": "Create Personal Video",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [1120, 200]
+    }
+  ],
+  "connections": {
+    "Outreach Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get High-Score Prospects",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get High-Score Prospects": {
+      "main": [
+        [
+          {
+            "node": "Score Router",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Score Router": {
+      "main": [
+        [
+          {
+            "node": "Make Call (90+ Score)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send SMS (60-89 Score)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Make Call (90+ Score)": {
+      "main": [
+        [
+          {
+            "node": "Create Personal Video",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}

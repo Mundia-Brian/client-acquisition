@@ -1,0 +1,161 @@
+{
+  "name": "Auto Prospecting Pipeline",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "apollo-webhook",
+        "responseMode": "responseNode"
+      },
+      "id": "webhook-apollo",
+      "name": "Apollo Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO prospects (email, first_name, last_name, company, title, linkedin_url, source) VALUES ($1, $2, $3, $4, $5, $6, 'apollo') ON CONFLICT (email) DO UPDATE SET updated_at = CURRENT_TIMESTAMP",
+        "additionalFields": {
+          "mode": "independently"
+        }
+      },
+      "id": "save-prospect",
+      "name": "Save Prospect",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 1,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "url": "https://api.clay.com/v1/enrich",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "clayApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer {{ $env.CLAY_API_KEY }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "email",
+              "value": "={{ $json.email }}"
+            }
+          ]
+        }
+      },
+      "id": "enrich-data",
+      "name": "Enrich with Clay",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "number": [
+            {
+              "value1": "={{ $json.score }}",
+              "operation": "larger",
+              "value2": 50
+            }
+          ]
+        }
+      },
+      "id": "score-filter",
+      "name": "High Score Filter",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [900, 300]
+    },
+    {
+      "parameters": {
+        "url": "https://api.instantly.ai/api/v1/lead/add",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer {{ $env.INSTANTLY_API_KEY }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "email",
+              "value": "={{ $json.email }}"
+            },
+            {
+              "name": "first_name",
+              "value": "={{ $json.first_name }}"
+            },
+            {
+              "name": "campaign_id",
+              "value": "cold_outreach_1"
+            }
+          ]
+        }
+      },
+      "id": "add-to-campaign",
+      "name": "Add to Email Campaign",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [1120, 200]
+    }
+  ],
+  "connections": {
+    "Apollo Webhook": {
+      "main": [
+        [
+          {
+            "node": "Save Prospect",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Prospect": {
+      "main": [
+        [
+          {
+            "node": "Enrich with Clay",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enrich with Clay": {
+      "main": [
+        [
+          {
+            "node": "High Score Filter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "High Score Filter": {
+      "main": [
+        [
+          {
+            "node": "Add to Email Campaign",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}
