@@ -1,0 +1,22 @@
+image:
+  file: .gitpod.Dockerfile
+
+tasks:
+  - name: Start Docker Compose stack
+    init: |
+      cd Docker
+      docker-compose up -d
+
+ports:
+  - port: 8080
+    onOpen: open-preview
+    description: EspoCRM
+  - port: 5678
+    onOpen: open-preview
+    description: n8n
+  - port: 8000
+    onOpen: open-preview
+    description: PostHog
+  - port: 8123
+    onOpen: open-preview
+    description: ClickHouse

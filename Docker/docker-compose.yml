@@ -1,0 +1,38 @@
+services:
+  crm:
+    image: espocrm/espocrm
+    container_name: crm
+    ports:
+      - "8080:80"
+    volumes:
+      - crm_data:/var/www/html
+
+  automation:
+    image: n8nio/n8n
+    container_name: n8n
+    ports:
+      - "5678:5678"
+    environment:
+      - DB_SQLITE_DATABASE=/home/node/.n8n/database.sqlite
+    volumes:
+      - n8n_data:/home/node/.n8n
+
+  posthog:
+    image: posthog/posthog
+    container_name: posthog
+    ports:
+      - "8000:8000"
+    environment:
+      - CLICKHOUSE_HOST=host.docker.internal
+    depends_on:
+      - clickhouse
+
+  clickhouse:
+    image: yandex/clickhouse-server
+    container_name: clickhouse
+    ports:
+      - "8123:8123"
+
+volumes:
+  crm_data:
+  n8n_data:
