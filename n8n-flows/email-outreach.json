@@ -1,0 +1,14 @@
+{
+  "name": "Email Outreach",
+  "nodes": [
+    {
+      "parameters": {
+        "fromEmail": "agency@example.com",
+        "subject": "Grow Your Business with Our SaaS Tools",
+        "message": "Hi {{name}},\n\nWe help businesses automate their marketing & client acquisition. Interested in a free demo?\n\n- [Book Demo](https://bit.ly/lets-c0nnect)"
+      },
+      "name": "Send Email",
+      "type": "n8n-nodes-base.emailSend"
+    }
+  ]
+}
