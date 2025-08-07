@@ -1,0 +1,22 @@
+FROM node:18-alpine
+
+# Install Docker and Docker Compose
+RUN apk add --no-cache docker docker-compose postgresql-client
+
+WORKDIR /app
+
+# Copy application files
+COPY . .
+
+# Make scripts executable
+RUN chmod +x setup.sh scripts/*.sh
+
+# Set Railway-specific environment
+ENV RAILWAY_ENVIRONMENT=true
+ENV PORT=8080
+
+# Expose main ports
+EXPOSE 8080 5678 8081 3000 8000
+
+# Start services
+CMD ["./setup.sh"]

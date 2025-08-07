@@ -1,0 +1,30 @@
+[build]
+  command = "npm run build"
+  functions = "netlify/functions"
+  publish = "dashboard"
+
+[build.environment]
+  NODE_VERSION = "18"
+
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/:splat"
+  status = 200
+
+[[redirects]]
+  from = "/crm"
+  to = "https://crm-subdomain.netlify.app"
+  status = 302
+
+[[redirects]]
+  from = "/n8n"
+  to = "https://n8n-subdomain.netlify.app"
+  status = 302
+
+[[redirects]]
+  from = "/social"
+  to = "https://mixpost-subdomain.netlify.app"
+  status = 302
+
+[functions]
+  directory = "netlify/functions"

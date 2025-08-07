@@ -1,0 +1,24 @@
+FROM node:18-slim
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    docker.io \
+    docker-compose \
+    postgresql-client \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Copy application
+COPY . .
+
+# Make scripts executable
+RUN chmod +x setup.sh scripts/*.sh
+
+# Health check endpoint
+RUN echo '#!/bin/bash\necho "OK"' > /app/health && chmod +x /app/health
+
+EXPOSE $PORT
+
+CMD ["./setup.sh"]

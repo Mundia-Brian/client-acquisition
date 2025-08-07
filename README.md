@@ -31,7 +31,17 @@ Complete auto-prospecting, marketing, and sales automation stack:
 - LinkedIn - Profile automation
 - TikTok, Instagram, Facebook - Viral distribution
 
-## Quick Setup
+## One-Click Deployment
+
+[![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/your-username/client-acquisition)
+
+[![Deploy on Railway](https://railway.app/button.svg)](https://railway.app/template/your-template)
+
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/your-username/client-acquisition)
+
+[![Deploy to Netlify](https://www.netlify.com/img/deploy/button.svg)](https://app.netlify.com/start/deploy?repository=https://github.com/your-username/client-acquisition)
+
+## Quick Setup (Local)
 
 ```bash
 ./setup.sh
@@ -77,7 +87,34 @@ Complete auto-prospecting, marketing, and sales automation stack:
 - **Free Tiers:** WhatsApp Business, YouTube, social platforms
 - **Self-hosted:** All core services run locally
 
+## Cloud Deployment
+
+### Gitpod (Recommended)
+- ✅ One-click deployment
+- ✅ Pre-configured environment
+- ✅ Public URLs for webhooks
+- ✅ 50 hours/month free
+
+### Railway
+- ✅ Free tier: $5 credit
+- ✅ Automatic subdomain
+- ✅ PostgreSQL included
+- ✅ Zero config deployment
+
+### Render
+- ✅ Free tier available
+- ✅ Managed PostgreSQL
+- ✅ Auto-deploy from Git
+- ✅ Custom domains
+
+### Netlify + Vercel (Serverless)
+- ✅ Free static hosting
+- ✅ Serverless functions
+- ✅ Global CDN
+- ✅ Custom domains
+
 ## Utility Scripts
 
 - `./scripts/status.sh` - Check service status
 - `./scripts/stop.sh` - Stop all services
+- `./scripts/deploy-setup.sh` - Configure for cloud deployment

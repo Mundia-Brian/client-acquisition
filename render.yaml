@@ -1,0 +1,25 @@
+services:
+  - type: web
+    name: client-acquisition-stack
+    env: docker
+    dockerfilePath: ./Dockerfile.render
+    plan: free
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: POSTGRES_PASSWORD
+        generateValue: true
+      - key: REDIS_PASSWORD
+        generateValue: true
+      - key: N8N_BASIC_AUTH_PASSWORD
+        generateValue: true
+    healthCheckPath: /health
+
+databases:
+  - name: postgres-db
+    databaseName: leads
+    user: postgres
+    plan: free
+
+  - name: redis-cache
+    plan: free

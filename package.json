@@ -1,0 +1,17 @@
+{
+  "name": "client-acquisition-stack",
+  "version": "1.0.0",
+  "description": "Complete auto-prospecting and sales automation stack",
+  "scripts": {
+    "build": "echo 'Build complete'",
+    "start": "./setup.sh",
+    "dev": "docker-compose up -d",
+    "deploy": "./scripts/deploy-setup.sh"
+  },
+  "dependencies": {
+    "pg": "^8.11.3"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

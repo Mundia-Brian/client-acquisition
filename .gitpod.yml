@@ -2,21 +2,66 @@ image:
   file: .gitpod.Dockerfile
 
 tasks:
-  - name: Start Docker Compose stack
+  - name: Setup Client Acquisition Stack
     init: |
-      cd Docker
-      docker-compose up -d
+      echo "🚀 Setting up Client Acquisition Stack..."
+      cp .env.example .env
+      # Auto-generate secure passwords
+      sed -i "s/change_me_please/$(openssl rand -base64 32)/g" .env
+      sed -i "s/postgres_password/$(openssl rand -base64 16)/g" .env
+      sed -i "s/redis_password/$(openssl rand -base64 16)/g" .env
+      # Set Gitpod workspace URL
+      export WORKSPACE_URL=$(gp url 8080 | sed 's/8080-//')
+      sed -i "s/localhost/${WORKSPACE_URL}/g" .env
+      echo "GITPOD_WORKSPACE_URL=${WORKSPACE_URL}" >> .env
+    command: |
+      ./setup.sh
+      sleep 30
+      ./scripts/setup-ollama.sh &
+      ./scripts/import-workflows.sh &
+      echo "✅ Stack ready! Check the ports panel for service URLs"
 
 ports:
-  - port: 8080
+  - name: CRM
+    port: 8080
     onOpen: open-preview
-    description: EspoCRM
-  - port: 5678
+    description: EspoCRM - Lead Management
+    visibility: public
+  - name: n8n Automation
+    port: 5678
     onOpen: open-preview
-    description: n8n
-  - port: 8000
+    description: Workflow Automation Hub
+    visibility: public
+  - name: Mixpost Social
+    port: 8081
     onOpen: open-preview
-    description: PostHog
-  - port: 8123
+    description: Social Media Management
+    visibility: public
+  - name: Botpress Chatbot
+    port: 3000
     onOpen: open-preview
-    description: ClickHouse
+    description: AI Chatbot Platform
+    visibility: public
+  - name: PostHog Analytics
+    port: 8000
+    onOpen: open-preview
+    description: Product Analytics
+    visibility: public
+  - name: Ollama AI
+    port: 11434
+    description: Local AI Models
+    visibility: private
+  - name: Whisper Voice
+    port: 9000
+    description: Speech Processing
+    visibility: private
+  - name: Communication Hub
+    port: 5000
+    description: SMS/Calls/WhatsApp API
+    visibility: private
+
+vscode:
+  extensions:
+    - ms-python.python
+    - ms-vscode.vscode-json
+    - redhat.vscode-yaml
